@@ -15,7 +15,8 @@ db = SQLAlchemy()
 
 
 def create_app(env):
-    app = Flask(__name__, static_folder='./static/dist', template_folder='./static')
+    app = Flask(
+        __name__, static_folder='./static/dist', template_folder='./static')
     app.config.from_object(config[env])
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     # not using sqlalchemy event system, hence disabling it
@@ -31,18 +32,25 @@ def create_app(env):
     api_bp = Blueprint('api', __name__)
     api = Api(api_bp)
 
-    from .auth.controllers import AuthLogin, AuthRegister
-    api.add_resource(AuthLogin, '/auth/login')
-    api.add_resource(AuthRegister, '/auth/register')
+    # Set up API endpoints
+    from .auth.controllers import LoginAPI, RegisterAPI
+    api.add_resource(LoginAPI, '/auth/login')
+    api.add_resource(RegisterAPI, '/auth/register')
 
-    app.register_blueprint(api_bp, url_prefix="/api/v1")
+    from .event.controllers import EventAPI, EventListAPI
+    api.add_resource(EventListAPI, '/events', endpoint='events')
+    api.add_resource(EventAPI, '/events/<int:id>', endpoint='event')
+
+    app.register_blueprint(api_bp, url_prefix="/api")
 
     return app
 
     # Create app blueprints
     # from .main import main as main_blueprint
     # app.register_blueprint(main_blueprint)
+
     # from .account import account as account_blueprint
     # app.register_blueprint(account_blueprint)
+
     # from .admin import admin as admin_blueprint
     # app.register_blueprint(admin_blueprint, url_prefix='/admin')

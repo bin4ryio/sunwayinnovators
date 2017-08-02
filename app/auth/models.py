@@ -1,6 +1,7 @@
+from datetime import datetime, timedelta
+
 from flask import current_app
 from jose import jwt
-from datetime import datetime, timedelta
 from passlib.hash import pbkdf2_sha256
 
 from .. import db
@@ -86,14 +87,14 @@ class User(db.Model):
         password = kwargs.get('password')
         password_conf = kwargs.get('password_conf')
         if password != password_conf:
-            raise ValidationError('Password and Confirm password need to be the same value')
+            raise ValidationError(
+                'Password and Confirm password need to be the same value')
         password = cls.hash_password(password)
         user = User(
-            email = email,
-            password = password,
-            first_name = first_name,
-            last_name = last_name
-        )
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name)
         db.session.add(user)
         db.session.commit()
 
@@ -113,7 +114,10 @@ class User(db.Model):
                     'exp': datetime.utcnow() + timedelta(days=0, seconds=5),
                     'iat': datetime.utcnow(),
                 }
-                token = jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
+                token = jwt.encode(
+                    payload,
+                    current_app.config['SECRET_KEY'],
+                    algorithm='HS256')
                 return token
             except:
                 raise ValidationError('There was a problem creating JWT token')

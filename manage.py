@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import os
 import subprocess
-from config import Config
 
+from flask import url_for
 from flask_migrate import Migrate, MigrateCommand
 from flask_script import Manager, Shell
 from redis import Redis
@@ -10,7 +10,7 @@ from rq import Connection, Queue, Worker
 
 from app import create_app, db
 from app.auth.models import Role, User
-
+from config import Config
 
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
 manager = Manager(app)
@@ -84,9 +84,8 @@ def setup_general():
                 password=Config.ADMIN_PASSWORD,
                 password_conf=Config.ADMIN_PASSWORD,
                 confirmed=True,
-                email=Config.ADMIN_EMAIL
-            )
-            print('Added administrator')
+                email=Config.ADMIN_EMAIL)
+            print('Added administrator {}'.format(Config.ADMIN_EMAIL))
 
 
 @manager.command
@@ -102,6 +101,28 @@ def run_worker():
     with Connection(conn):
         worker = Worker(map(Queue, listen))
         worker.work()
+
+
+@manager.command
+def list_routes():
+    """List of all possible routes."""
+    import urllib
+    output = []
+    for rule in app.url_map.iter_rules():
+
+        options = {}
+        for arg in rule.arguments:
+            options[arg] = "[{0}]".format(arg)
+
+        methods = ','.join(rule.methods)
+        # url = url_for(rule.endpoint, **options)
+        # line = urllib.parse.unquote("{:50s} {:20s} {}".format(rule.endpoint, methods, url))
+        line = urllib.parse.unquote(
+            "{:50s} {:20s} {}".format(rule.endpoint, methods, rule))
+        output.append(line)
+
+    for line in sorted(output):
+        print(line)
 
 
 @manager.command
