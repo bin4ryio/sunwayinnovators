@@ -1,9 +1,17 @@
-from flask_restful import Resource, abort, reqparse
+from flask_restplus import Namespace, Resource, fields, reqparse
 
 from ..utils.errors import ValidationError
 from .models import User
 
 
+api = Namespace('auth', description='Authentication')
+
+# event = api.model('Cat', {
+#     'id': fields.String(required=True, description='Event ID'),
+#     'title': fields.String(required=True, description='Event Title'),
+# })
+
+@api.route('/login')
 class LoginAPI(Resource):
     def post(self):
         parser = reqparse.RequestParser()
@@ -20,12 +28,13 @@ class LoginAPI(Resource):
 
         try:
             token = User.validate(email, password)
-            return {'token': token}
+            return {'access_token': token}
         except ValidationError as e:
             # abort(400)
             abort(400, message='Error logging in -> {}'.format(str(e)))
 
 
+@api.route('/register')
 class RegisterAPI(Resource):
     def post(self):
         parser = reqparse.RequestParser()

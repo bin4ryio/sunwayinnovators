@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from flask import current_app
-from jose import jwt
+# from jose import jwt
 from passlib.hash import pbkdf2_sha256
 
 from .. import db

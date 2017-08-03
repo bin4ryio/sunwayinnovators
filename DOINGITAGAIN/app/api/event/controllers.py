@@ -1,21 +1,34 @@
 import datetime
 
-from flask_restful import Resource, abort, fields, marshal, reqparse
+from flask_restplus import Namespace, Resource, fields
+from flask_jwt_extended import jwt_required, jwt_optional, get_jwt_identity
 
 from ..utils.errors import ValidationError
 from .models import Event
 
+# api.add_resource(EventListAPI, '/events', endpoint='events')
+# api.add_resource(EventAPI, '/events/<int:id>', endpoint='event')
 
-event_fields = {
-    'title': fields.String,
-    'content': fields.String,
-    'date_start': fields.DateTime(dt_format='rfc822'),
-    'date_end': fields.DateTime(dt_format='rfc822'),
-    'location': fields.String,
-    'uri': fields.Url('event')
-}
+api = Namespace('event', description='Event')
+
+event = api.model('Cat', {
+    'id': fields.String(required=True, description='Event ID'),
+    'title': fields.String(required=True, description='Event Title'),
+})
+
+# event_fields = {
+#     'title': fields.String,
+#     'content': fields.String,
+#     'date_start': fields.DateTime(dt_format='rfc822'),
+#     'date_end': fields.DateTime(dt_format='rfc822'),
+#     'location': fields.String,
+#     'uri': fields.Url('event')
+# }
 
 
+@api.route('/<id>')
+@api.param('id', 'Event ID')
+@api.response(404, 'Event not found')
 class EventAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -56,21 +69,19 @@ class EventAPI(Resource):
         return {'result': True}
 
 
+@api.route('/')
 class EventListAPI(Resource):
-    def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('title', type=str, location='json')
-        self.reqparse.add_argument('content', type=str, location='json')
-        self.reqparse.add_argument(
-            'date_start', type=datetime.date, location='json')
-        self.reqparse.add_argument(
-            'date_end', type=datetime.date, location='json')
-        self.reqparse.add_argument('location', type=str, location='json')
-        super(EventListAPI, self).__init__()
+    @api.doc('list_events')
+    @api.marshal_list_with(event)
 
     def get(self):
-        events = Event.get_all()
-        return {'events': [marshal(event, event_fields) for event in events]}
+        # method_decorators = [jwt_required]
+        # current_user = get_jwt_identity()
+        if current_user:
+            return {'hello_from': current_user}, 200
+        return {'hello_from': 'an anonymous user'}, 200
+        # events = Event.get_all()
+        # return {'events': [marshal(event, event_fields) for event in events]}
 
     def post(self):
         args = self.reqparse.parse_args()

@@ -9,9 +9,9 @@ else:
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-if os.path.exists('.env'):
+if os.path.exists('config.env'):
     print('Importing environment from .env file')
-    for line in open('.env'):
+    for line in open('config.env'):
         var = line.strip().split('=')
         if len(var) == 2:
             os.environ[var[0]] = var[1]
@@ -20,6 +20,8 @@ if os.path.exists('.env'):
 class Config(object):
     APP_NAME = 'Sunway Innovators'
     DEBUG = True
+    # This should not be here
+    PROPAGATE_EXCEPTIONS = True
     TESTING = False
     DATABASE_NAME = "sunwayinnovators"
     UPLOAD_FOLDER = 'upload/'
@@ -31,10 +33,22 @@ class Config(object):
         SECRET_KEY = 'SECRET_KEY_ENV_VAR_NOT_SET'
         print('SECRET KEY ENV VAR NOT SET! SHOULD NOT SEE IN PRODUCTION')
 
-    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'admin@test.com'
-    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or '1234qwer'
+    # Email server
+    MAIL_SERVER = 'smtp.sendgrid.net'
+    MAIL_PORT = 587
+    MAIL_USE_TLS = True
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'password'
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'admin@sunwayinnovators.com'
+    EMAIL_SUBJECT_PREFIX = '[{}]'.format(APP_NAME)
+    EMAIL_SENDER = '{app_name} Admin <{email}>'.format(
+        app_name=APP_NAME, email=MAIL_USERNAME)
 
     REDIS_URL = os.getenv('REDISTOGO_URL') or 'http://localhost:6379'
+
+    RAYGUN_APIKEY = os.environ.get('RAYGUN_APIKEY')
 
     # Parse the REDIS_URL to set RQ config variables
     if PYTHON_VERSION == 3:
@@ -57,7 +71,7 @@ class Config(object):
 class DevelopmentConfig(Config):
     DEBUG = True
     ASSETS_DEBUG = True
-    SECRET_KEY = "cc5da5a6d1a8e8dd8e016d720798fa11db3508b8"
+    SECRET_KEY = "S0m3S3cr3tK3y"
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
     print('THIS APP IS IN DEBUG MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
@@ -79,6 +93,8 @@ class ProductionConfig(Config):
     def init_app(cls, app):
         Config.init_app(app)
         assert os.environ.get('SECRET_KEY'), 'SECRET_KEY IS NOT SET!'
+
+        flask_raygun.Provider(app, app.config['RAYGUN_APIKEY']).attach()
 
 
 class HerokuConfig(ProductionConfig):
