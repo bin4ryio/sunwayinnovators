@@ -9,6 +9,7 @@ api = Namespace('users', description='Users')
 
 @api.route('/')
 class UsersAPI(Resource):
+
     @helpers.standardize_api_response
     def get(self, email=None):
         """HTTP GET. Get one or all users.

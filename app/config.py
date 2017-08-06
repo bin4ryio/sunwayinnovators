@@ -38,6 +38,7 @@ class DevelopmentConfig(BaseConfig):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
+    SECRET_KEY = 'I4MS3CR3T'
 
 
 class TestingConfig(BaseConfig):

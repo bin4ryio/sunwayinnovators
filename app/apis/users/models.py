@@ -1,3 +1,4 @@
+from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db
 
 from ..common import Base
@@ -25,7 +26,7 @@ class User(Base):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     email = db.Column(db.String(128), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
     first_name = db.Column(db.String(128))
     last_name = db.Column(db.String(128))
     active = db.Column(db.Boolean, default=True, nullable=False)
@@ -33,10 +34,30 @@ class User(Base):
 
     def __init__(self, email, password):
         self.email = email
-        self.password = password  # generate hash here
+        self.hashed_password(password)
 
     def __repr__(self):
         return "<User: {}>".format(self.email)
+
+    def hashed_password(self, password):
+        self.password_hash = generate_password_hash (password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    @property
+    def password(self):
+        raise AttributeError('`password` is not a readable attribute')
+
+    def full_name(self):
+        return '%s %s' % (self.first_name, self.last_name)
+
+    def can(self, permissions):
+        return self.role is not None and \
+            (self.role.permissions & permissions) == permissions
+
+    def is_admin(self):
+        return self.can(Permission.ADMINISTER)
 
     def to_json2(self):
         return {

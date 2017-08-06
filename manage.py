@@ -52,7 +52,7 @@ def setup_general():
 def seed_db():
     """Seeds the database with first user."""
     db.session.add(
-        User(email='admin@sunwayinnovators.com', password='imp0ss1ble'))
+        models.User(email='admin@sunwayinnovators.com', password='imp0ss1ble'))
     db.session.commit()
 
 

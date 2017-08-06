@@ -51,8 +51,14 @@ $(env) python manage.py seed_db
 ```
 $(env) python manage.py runserver
 ```
-Now navigate to [localhost:5000/docs](localhost:5000/docs) for Swagger UI
 
+Navigate to [localhost:5000/docs](localhost:5000/docs) to for API documentations
+
+##### List all available commands
+
+```
+$(env) python manage.py
+```
 
 ## Contributing
 

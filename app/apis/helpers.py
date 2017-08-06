@@ -53,5 +53,7 @@ def standardize_api_response(function):
 
         return collections.OrderedDict([
             status_code, description, data]), status_code[-1]
+        # return json.dumps(collections.OrderedDict([
+        #     status_code, description, data])), status_code[-1]
 
     return make_response
