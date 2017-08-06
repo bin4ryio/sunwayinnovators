@@ -1,10 +1,20 @@
 language: python
+
 python:
-  - "3.6.2"
-services: postgresql
+  - '3.6'
+
+service:
+  - postgresql
+
 install:
-  - "pip install -r requirements.txt"
-  - "pip install -r requirements_test.txt"
-script: py.test tests -vrsx --cov app --pylama
-after_success:
-  - coveralls
+  - pip install -r requirements.txt
+
+before_script:
+  - export APP_SETTINGS=project.config.TestingConfig
+  - export DATABASE_TEST_URL=postgresql://postgres:@localhost/innovators_test
+  - export SECRET_KEY=changeme
+  - psql -c 'create database users_test;' -U postgres
+  - python manage.py recreate_db
+
+script:
+  - python manage.py test

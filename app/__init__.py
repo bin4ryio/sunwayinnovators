@@ -1,31 +1,27 @@
 import os
-from config import config
-import flask
-from .auth import jwt
-from . import extensions, users
+
+from flask import Blueprint, Flask, jsonify
+
+from .apis import api
+from .extensions import cors, db, jwt, mail, migrate, redis
 
 
-basedir = os.path.abspath(os.path.dirname(__file__))
+def create_app():
 
-def create_app(env):
-    app = flask.Flask(__name__)
-    app.config.from_object(config[env])
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    # not using sqlalchemy event system, hence disabling it
+    app = Flask(__name__)
 
-    config[env].init_app(app)
+    # set config
+    app_settings = os.getenv('APP_SETTINGS') if os.getenv('APP_SETTINGS') else 'app.config.DevelopmentConfig'
+    app.config.from_object(app_settings)
 
-    register_extensions(app)
-    register_blueprints(app)
-    jwt.set_jwt_handlers(extensions.jwt)
+    # set up extensions
+    cors.init_app(app, resources={r'/api/*': {'origins': '*'}})
+    db.init_app(app)
+    jwt.init_app(app)
+    migrate.init_app(app, db)
+    mail.init_app(app)
+    redis.init_app(app)
+
+    api.init_app(app)
 
     return app
-
-
-def register_extensions(app):
-    extensions.db.init_app(app)
-    extensions.jwt.init_app(app)
-
-
-def register_blueprints(app):
-    app.register_blueprint(users.blueprint)

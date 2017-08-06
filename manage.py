@@ -1,36 +1,31 @@
 #!/usr/bin/env python
-import os
 import subprocess
+import unittest
 
-from flask import url_for
-from flask_migrate import Migrate, MigrateCommand
-from flask_script import Manager, Shell, Server
-from redis import Redis
-from rq import Connection, Queue, Worker
+import coverage
+from flask_migrate import MigrateCommand
+from flask_script import Manager, Shell
 
-from app import create_app
-from app.extensions import db
-from app.users.models import Role, User
-from config import Config
+from app import create_app, db
+from app.apis import models
 
-app = create_app(os.getenv('FLASK_CONFIG') or 'default')
+COV = coverage.coverage(branch=True, include='app/*', omit=['app/tests/*'])
+COV.start()
+
+
+def context():
+    return dict(app=app, db=db, models=models)
+
+
+app = create_app()
 manager = Manager(app)
-migrate = Migrate(app, db)
-
-
-def make_shell_context():
-    return dict(app=app, db=db, User=User, Role=Role)
-
-manager.add_command('shell', Shell(make_context=make_shell_context))
 manager.add_command('db', MigrateCommand)
+manager.add_command('shell', Shell(make_context=context))
 
 
 @manager.command
 def recreate_db():
-    """
-    Recreates a local database. You probably should not use this on
-    production.
-    """
+    """Recreates a database."""
     db.drop_all()
     db.create_all()
     db.session.commit()
@@ -49,21 +44,16 @@ def setup_prod():
 
 
 def setup_general():
-    """Runs the set-up needed for both local development and production.
-       Also sets up first admin user."""
-    Role.insert_roles()
-    admin_query = Role.query.filter_by(name='Administrator')
-    if admin_query.first() is not None:
-        if User.query.filter_by(email=Config.ADMIN_EMAIL).first() is None:
-            user = User(
-                first_name='Admin',
-                last_name='Account',
-                password=Config.ADMIN_PASSWORD,
-                confirmed=True,
-                email=Config.ADMIN_EMAIL)
-            db.session.add(user)
-            db.session.commit()
-            print('Added administrator {}'.format(Config.ADMIN_EMAIL))
+    """Runs the set-up needed for both local development and production."""
+    pass
+
+
+@manager.command
+def seed_db():
+    """Seeds the database with first user."""
+    db.session.add(
+        User(email='admin@sunwayinnovators.com', password='imp0ss1ble'))
+    db.session.commit()
 
 
 @manager.command
@@ -82,6 +72,32 @@ def run_worker():
 
 
 @manager.command
+def test():
+    """Runs the unit tests without test coverage."""
+    tests = unittest.TestLoader().discover('app/tests', pattern='test*.py')
+    result = unittest.TextTestRunner(verbosity=2).run(tests)
+    if result.wasSuccessful():
+        return 0
+    return 1
+
+
+@manager.command
+def cov():
+    """Runs the unit tests with coverage."""
+    tests = unittest.TestLoader().discover('app/tests')
+    result = unittest.TextTestRunner(verbosity=2).run(tests)
+    if result.wasSuccessful():
+        COV.stop()
+        COV.save()
+        print('Coverage Summary:')
+        COV.report()
+        COV.html_report()
+        COV.erase()
+        return 0
+    return 1
+
+
+@manager.command
 def list_routes():
     """List of all possible routes."""
     import urllib
@@ -93,8 +109,6 @@ def list_routes():
             options[arg] = "[{0}]".format(arg)
 
         methods = ','.join(rule.methods)
-        # url = url_for(rule.endpoint, **options)
-        # line = urllib.parse.unquote("{:50s} {:20s} {}".format(rule.endpoint, methods, url))
         line = urllib.parse.unquote(
             "{:50s} {:20s} {}".format(rule.endpoint, methods, rule))
         output.append(line)
