@@ -1,4 +1,4 @@
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, get_jwt_identity
 
 from app.extensions import db
 from .. import helpers
@@ -24,8 +24,11 @@ def register(email, password):
     except IntegrityError:
         return {'error': 'The email {!r} already exists.'.format(email)}
 
-    token = {'access_token': create_access_token(identity=email)}
-    return {'success': token}
+    payload = {
+        'access_token': create_access_token(identity=email),
+        'email': email
+    }
+    return {'success': payload}
 
 
 
@@ -38,11 +41,15 @@ def login(email, password):
     user = User.query.filter_by(email=email).first()
 
     if not user:
-        return {'no-data': ''}
+        # return {'no-data': ''}
+        return {'error': 'Invalid login.'}
 
     if user.check_password(password):
-        token = {'access_token': create_access_token(identity=email)}
-        return {'success': token}
+        payload = {
+            'access_token': create_access_token(identity=email),
+            'email': email
+        }
+        return {'success': payload}
 
     return {'error': 'Invalid password.'}
 

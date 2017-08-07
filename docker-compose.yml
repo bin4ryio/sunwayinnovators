@@ -14,7 +14,7 @@ services:
 
   app:
     container_name: app
-    build: .
+    build: ./
     ports:
       - 5001:5000 # expose ports - HOST:CONTAINER
     environment:

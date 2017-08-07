@@ -50,9 +50,9 @@ def setup_general():
 
 @manager.command
 def seed_db():
-    """Seeds the database with first user."""
+    """Seeds the database with demo user. This shall not be used in production."""
     db.session.add(
-        models.User(email='admin@sunwayinnovators.com', password='imp0ss1ble'))
+        models.User(email='test@test.com', password='123qwe'))
     db.session.commit()
 
 
