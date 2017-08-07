@@ -13,4 +13,4 @@ def get_users(email=None):
     if not users:
         return {'no-data': ''}
 
-    return {'success': [u.to_json2() for u in users]}
+    return {'success': [u.json() for u in users]}

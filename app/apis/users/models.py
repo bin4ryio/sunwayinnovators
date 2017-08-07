@@ -59,7 +59,7 @@ class User(Base):
     def is_admin(self):
         return self.can(Permission.ADMINISTER)
 
-    def to_json2(self):
+    def json(self):
         return {
             'id': str(self.id),
             'email': self.email,

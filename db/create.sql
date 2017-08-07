@@ -1,4 +1,4 @@
-CREATE DATABASE sunwayinnovators_prod;
-CREATE DATABASE sunwayinnovators_staging;
-CREATE DATABASE sunwayinnovators_dev;
-CREATE DATABASE sunwayinnovators_test;
+CREATE DATABASE si_prod;
+CREATE DATABASE si_staging;
+CREATE DATABASE si_dev;
+CREATE DATABASE si_test;
